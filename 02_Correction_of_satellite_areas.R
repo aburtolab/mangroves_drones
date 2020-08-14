@@ -102,21 +102,21 @@ data.frame(
 
 
 
+# Plotting the residual errors as absolute values
+
 as.data.frame(residual_errors) %>% 
   ggplot(aes(x=abs(residual_errors)))+
   geom_density(fill="darkgreen", alpha=.33)+
   geom_vline(aes(xintercept=0), size=2)+
-  labs(x="Residual error", y="Density", title = "Residual error distribution over 1000 trials")+
+  labs(x="Residual error (m)", y="Density", title = "Residual error distribution over 1000 trials")+
   xlim(0,25)+
   theme_classic()+
   theme(panel.border = element_rect(fill=NA))
 
 
-
+ggsave("figs/Figure_residual_errors.jpeg", width=8, height=4, dpi=600)
 
 # Gridcode value comparisons ----------------------------------------------
-
-
 
 fig_data <- summary[,1:4]
 colnames(fig_data) <- c("gridcode", "Count", "Mangrove", "Non-mangrove")
@@ -142,3 +142,11 @@ fig_data_long %>%
 
 ## saving the image
 ggsave("figs/Figure_convolution.jpeg", width=8, height=4, dpi=600)
+
+
+
+
+
+# END OF SCRIPT -----------------------------------------------------------
+
+
