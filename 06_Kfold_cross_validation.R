@@ -44,7 +44,8 @@ groups[[7]] <- shuffled[13:14]
 ### Step 4 - Train and Test Model for each group
 accuracy_tot <- c()
 rmse_tot <- c()
-
+n_train <- c()
+n_test <- c()
 for (j in 1:length(groups)) {
   # Define test and training groups
   test_sites <- groups[[j]]
@@ -55,9 +56,17 @@ for (j in 1:length(groups)) {
   #  filter(Site %in% train_sites)
   #hist(try$mangrove_area)
   
+  # Define test and training data sets
+  train_data <- data %>% 
+    filter(Site %in% train_sites)
+  test_data <- data %>% 
+    filter(Site %in% test_sites)
+  
+  n_train <- c(n_train, length(train_data$FID_Fishnet)) # number of samples going into training the model
+  n_test <- c(n_test, length(test_data$FID_Fishnet)) # number of samples going into testing the model 
+  
   # Calculate correction factors
-  data_train <- data %>% 
-    filter(Site %in% train_sites) %>% # filter data that we are using to train the model
+  data_train <- train_data %>% # filter data that we are using to train the model
     group_by(gridcode) %>% 
     summarise(count_train = n(),
               mangrove_p_a = mean(mangrove_percent),
@@ -66,8 +75,7 @@ for (j in 1:length(groups)) {
   data_train[1,4] <- 0 # this is to prevent overestimation over areas with no mangroves
   
   # Apply calculation factors
-  data_test <- data %>% 
-    filter(Site %in% test_sites) %>% # filter data that we are using to test the model 
+  data_test <- test_data %>% # filter data that we are using to test the model 
     group_by(gridcode) %>% 
     summarise(count_test = n(),
               total_mangrove = sum(mangrove_area), # real mangrove area
@@ -82,12 +90,16 @@ for (j in 1:length(groups)) {
 }
 data.frame(accuracy_tot, rmse_tot)
 
+data.frame(n_train, n_test)
 # ------------------------------------------------------------------------------
 ##### Repeated grouped K fold cross validation #####
 
 # Initializing variables 
 df <- data.frame(accuracy_tot = double(),
-                 rmse_tot = double()) 
+                 rmse_tot = double())
+
+df_2 <- data.frame(n_train = double(),
+                 n_test = double())
 k <- 7
 
 for (ii in 1:100) {
@@ -107,6 +119,15 @@ for (ii in 1:100) {
     test_sites <- groups[[j]]
     train_sites <- sites[sites != test_sites]
   
+    # Define test and training data sets
+    train_data <- data %>% 
+      filter(Site %in% train_sites)
+    test_data <- data %>% 
+      filter(Site %in% test_sites)
+    
+    n_train <- c(n_train, length(train_data$FID_Fishnet)) # number of samples going into training the model
+    n_test <- c(n_test, length(test_data$FID_Fishnet)) # number of samples going into testing the model 
+    
     # Calculate correction factors
     data_train <- data %>% 
       filter(Site %in% train_sites) %>% # filter data that we are using to train the model
@@ -137,8 +158,24 @@ for (ii in 1:100) {
 
   df <- rbind(df, df_a)
   print(ii)
+  
+  df_2 <- rbind(df_2, data.frame(n_train, n_test))
+  
 }
 
 df
-hist(df$accuracy_tot)
+df_2 # number of samples going into train and test the data
 hist(df$rmse_tot)
+
+hist(df_2$n_test/df_2$n_train)
+hist(df$accuracy_tot)
+
+#### Exporting Results ####
+png("Outputs/Figures/k_fold_grouped_accuracy.png", width = 6, height = 4, unit="in", res = 600)
+hist(df$accuracy_tot)
+dev.off()
+
+png("Outputs/Figures/k_fold_grouped_ratio.png", width = 6, height = 4, unit="in", res = 600)
+hist(df_2$n_test/df_2$n_train)
+dev.off()
+

@@ -84,7 +84,6 @@ k <- 10
 for (ii in 1:100) { # does the same as above but 100 times 
 
   # split into groups
-  n <- length(data$FID_Fishnet)
   ID <- 1:n
   groups <- list()
   data$ID <- ID
@@ -136,3 +135,8 @@ for (ii in 1:100) { # does the same as above but 100 times
 df
 hist(df$accuracy_tot)
 hist(df$rmse_tot)
+
+
+png("Outputs/Figures/k_fold_accuracy.png", width = 6, height = 4, unit="in", res = 600)
+hist(df$accuracy_tot)
+dev.off()
