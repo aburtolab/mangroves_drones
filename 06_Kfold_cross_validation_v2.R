@@ -1,17 +1,20 @@
 #### Joy Kumagai
-#### Date: Sep. 30th 2020
-#### K fold cross validation w/ Caret (repeated) 
-#### Drones and Mangroves - post review
+#### Date: Oct. 30th 2020
+#### K fold cross validation (repeated) 
+#### Drones and Mangroves Project 
 
 #### Load Packages and Data ####
 library(tidyverse)
-library(caret) 
 data <- read.csv("Data/convolution108_v2.4_sites_all.csv")
 
 ##### Declare Functions
+# RMSE
 F.rmse <- function(m, o){
   sqrt(mean((m - o)^2, na.rm=T))
 }
+
+# Standard error
+F.std <- function(x) sd(x)/sqrt(length(x))
 
 # ------------------------------------------------------------------------------
 #####  K fold cross validation #####
@@ -25,7 +28,7 @@ data <- data %>%
          nonmangrove_percent = (nonmangrove_area/total_area)*100) 
 
 ### Step 2 - Choose k value 
-sites <- unique(data$Site) # 14 unique group (site) values, to have equal number of groups k should equal 7
+sites <- unique(data$Site) 
 k <- 10
 
 ### Step 3 - Group the data (not based on sites)
@@ -81,7 +84,7 @@ df <- data.frame(accuracy_tot = double(),
                  rmse_tot = double()) 
 k <- 10
 
-for (ii in 1:100) { # does the same as above but 100 times 
+for (ii in 1:1000) { # does the same as above but 100 times 
 
   # split into groups
   ID <- 1:n
@@ -132,11 +135,25 @@ for (ii in 1:100) { # does the same as above but 100 times
   print(ii)
 }
 
-df
-hist(df$accuracy_tot)
+###### Review of Analysis #####
 hist(df$rmse_tot)
 
+mean(abs(df$accuracy_tot)) # on average the estimated areas area is 1.7% different than the true area (drone identified)
+sd(df$accuracy_tot) # standard deviation
 
+plot_accuracy <- df %>% 
+  ggplot(aes(x = accuracy_tot)) +
+  geom_histogram(color = "black", 
+                 fill = "grey", 
+                 bins = 20) +
+  theme_minimal() +
+  labs(x = "Accuracy of estimated mangrove extent (%)",
+       y = "Count") +
+  theme(axis.line = element_line(colour = "darkgrey", 
+                                 size=0.3)) +
+  scale_x_continuous(breaks = c(-6,-4,-2,0,2,4,6))
+
+##### Export #####
 png("Outputs/Figures/k_fold_accuracy.png", width = 6, height = 4, unit="in", res = 600)
-hist(df$accuracy_tot)
+plot_accuracy
 dev.off()
